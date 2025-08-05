@@ -1,0 +1,94 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+    padding: 0;
+    margin: 0;
+}
+
+#task-modal {
+}
+
+#modal-holder {
+    display: flex;
+    flex-direction: column;
+}
+
+#save-btn {
+    width: 10%;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#close-modal-btn {
+    position: fixed;
+    top: 10%;
+    right: 10%;
+    border-radius: 50%;
+}
+
+#add-task {
+    border-radius: 50%;
+}
+
+.task {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    padding: 5%;
+    height: 0.5vh;
+    max-height: 10px;
+    font-size: 0.6rem;
+    transition: background-color 0.3s ease-out;
+}
+
+.task:hover {
+    background-color: blueviolet;
+    cursor: pointer;
+}
+
+input[type="checkbox"]:checked + .task-info {
+    text-decoration: line-through;
+}
+
+.task-info::before {
+    content: '- ';
+}
+
+.task-checkbox {
+    height: 2vh;
+}
+
+#task-holder {
+    border: 1px solid black;
+    height: 80vh;
+    max-height: 80vh;
+    width: 45vw;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    flex-direction: column;
+}
+
+#to-do-container {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    padding: 2vh;
+    gap: 1vh;
+}
+
+.completed {
+    text-decoration: line-through;
+    color: gray;
+}
