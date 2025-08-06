@@ -1,3 +1,7 @@
+:root {
+    --selected: lightgrey;
+}
+
 * {
     box-sizing: border-box;
 }
@@ -8,9 +12,6 @@ body {
     overflow: hidden;
     padding: 0;
     margin: 0;
-}
-
-#task-modal {
 }
 
 #modal-holder {
@@ -38,19 +39,61 @@ body {
 }
 
 .task {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
     width: 100%;
-    padding: 5%;
-    height: 0.5vh;
-    max-height: 10px;
-    font-size: 0.6rem;
+    height: 5vh;
+    font-size: 0.5rem;
     transition: background-color 0.3s ease-out;
 }
 
+.task-wrapper {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px;
+    border: 1px solid black;
+    height: 5vh;
+}
+
+.task-expand-wrapper {
+    border: 1px solid black;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    height: 10vh;
+}
+
+.task-description {
+    font: 0.2rem;
+    color: green;
+}
+
+.button-wrapper button {
+    width: 20%;
+    height: 50%;
+}
+
+.button-wrapper {
+    width: 30%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10%;
+}
+
+.selected-task {
+    display: flex;
+    justify-content: space-between;
+    flex-direction: column;
+    width: 100%;
+    height: 15vh;
+    transition: background-color 0.3s ease-out;
+    border: 1px solid black;
+    background-color: var(--selected);
+}
+
 .task:hover {
-    background-color: blueviolet;
+    background-color: var(--selected);
     cursor: pointer;
 }
 
@@ -91,4 +134,8 @@ input[type="checkbox"]:checked + .task-info {
 .completed {
     text-decoration: line-through;
     color: gray;
+}
+
+.hidden {
+    display: none;
 }

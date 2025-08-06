@@ -8,17 +8,25 @@ const taskInput = document.getElementById('task-name-input');
 const taskExtraInfo = document.getElementById('task-description-input');
 const modalInputLabel = document.getElementById('modal-input-label');
 const modalInfoLabel = document.getElementById('modal-info-label');
+let currentEditingId = null;
 
 taskModal.close();
 
 let tasks = [];
 
-const editTask = (task) => {
-    modalInputLabel.textContent = 'Edit Task:';
-    taskInput.value = task.task;
-    modalInfoLabel.textContent = 'Edit Extra Info:';
-    taskExtraInfo.value = task.info;
-    taskModal.showModal();
+const deleteTask = (taskId) => {
+    tasks = tasks.filter(task => task.id !== taskId);
+    loadTasks();
+    currentEditingId = null;
+}
+
+const editTask = (taskId) => {
+    currentEditingId = taskId;
+    const taskObj = tasks[tasks.findIndex(task => task.id === taskId)];
+    taskInput.value = `${taskObj.task}`;
+    taskExtraInfo.value = `${taskObj.info}`;
+    modalTitle.textContent = `Edit Task:`
+    taskModal.showModal()
 }
 
 const closeModal = () => {
@@ -27,31 +35,47 @@ const closeModal = () => {
 };
 
 saveTask = () => {
-    const task = taskInput.value;
-    const extraInfo = taskExtraInfo.value;
+        const task = taskInput.value;
+        const extraInfo = taskExtraInfo.value;
 
-    const newTaskObj = {
-        task: task,
-        info: extraInfo,
-    }
-
-    tasks.push(newTaskObj);
-    closeModal();
+        if(currentEditingId){
+            const editingTask = tasks[tasks.findIndex(task => task.id === currentEditingId)];
+            editingTask.info = extraInfo;
+            editingTask.task = task;
+        } else {
+            const newTaskObj = {
+                task: task,
+                info: extraInfo,
+                id: Date.now() + Math.random().toString(16).slice(2),
+            };
+            tasks.push(newTaskObj);
+        };
+        closeModal();
 }
 
 const loadTasks = () => {
     taskHolder.innerHTML = ``;
     tasks.forEach(task => {
         taskHolder.innerHTML += `
-            <div class="task">
-                <p class="task-info">${task.task}</p>
-                <input type="checkbox" class="task-checkbox">
+            <div class="task" data-id="${task.id}">
+                <div class="task-wrapper">
+                    <p class="task-info">${task.task}</p>
+                    <input type="checkbox" class="task-checkbox">
+                </div>
+                <div class="task-expand-wrapper hidden">
+                    <p class="task-description">${task.info}</p>
+                    <div class="button-wrapper">
+                        <button class="edit-button">Edit</button>
+                        <button class="delete-task-button">X</button>
+                    </div>
+                </div>
             </div>
         `
     });
 }
 
 const addTask = () => {
+    currentEditingId = null;
     modalTitle.textContent = 'Create new task:';
     taskInput.value = '';
     taskExtraInfo.value = '';
@@ -66,10 +90,35 @@ taskHolder.addEventListener('change', change => {
 });
 
 taskHolder.addEventListener('click', click => {
-    const taskElement = click.target.closest('.task');
-    if(taskElement) {
-        editTask(taskElement);
-    }
+    if(click.target.matches('.task-checkbox')){
+        return;
+    } else if(click.target.matches('.edit-button')){
+        const taskElement = click.target.closest('.task, .selected-task');
+        editTask(taskElement.dataset.id);
+    } else if(click.target.matches('.delete-task-button')){
+        const taskElement = click.target.closest('.task, .selected-task');
+        deleteTask(taskElement.dataset.id)
+    }else {
+        const taskElement = click.target.closest('.task, .selected-task');
+        if(taskElement) {
+            if(taskElement.classList.contains('task')){
+                document.querySelectorAll('#task-holder .selected-task').forEach(task =>
+                    {
+                        task.classList.replace('selected-task', 'task');
+                    });
+                taskElement.classList.replace('task', 'selected-task');
+            } else {
+                taskElement.classList.replace('selected-task', 'task');
+            }
+        };
+
+        document.querySelector('#task-holer .task').forEach(task => {
+            if(task.classList.contains('selected-class')){
+                return
+            } else {
+                task.classList.add('hidden');
+            }
+        })}
 });
 addTaskBtn.addEventListener('click', addTask);
 closeModalBtn.addEventListener('click', closeModal);
