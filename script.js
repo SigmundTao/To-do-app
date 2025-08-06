@@ -6,63 +6,97 @@ const modalTitle = document.getElementById('modal-title');
 const closeModalBtn = document.getElementById('close-modal-btn');
 const taskInput = document.getElementById('task-name-input');
 const taskExtraInfo = document.getElementById('task-description-input');
-const modalInputLabel = document.getElementById('modal-input-label');
-const modalInfoLabel = document.getElementById('modal-info-label');
 let currentEditingId = null;
+let currentSelectedTaskId = null;
 
 taskModal.close();
 
 let tasks = [];
+let completedTasks = [];
+
+
+const taskCompleted = (taskId) => {
+    if (currentSelectedTaskId === taskId) {
+        currentSelectedTaskId = null;
+    }
+
+    const taskIndex = tasks.findIndex(t => t.id === taskId);
+    const completedIndex = completedTasks.findIndex(t => t.id === taskId);
+
+    if (taskIndex !== -1) {
+        completedTasks.push(tasks.splice(taskIndex, 1)[0]);
+    } else if (completedIndex !== -1) {
+        tasks.push(completedTasks.splice(completedIndex, 1)[0]);
+    }
+
+    loadTasks();
+};
+
 
 const deleteTask = (taskId) => {
     tasks = tasks.filter(task => task.id !== taskId);
+    completedTasks = completedTasks.filter(task => task.id !== taskId);
+    if (currentSelectedTaskId === taskId) {
+        currentSelectedTaskId = null;
+    }
     loadTasks();
-    currentEditingId = null;
-}
+};
+
 
 const editTask = (taskId) => {
     currentEditingId = taskId;
-    const taskObj = tasks[tasks.findIndex(task => task.id === taskId)];
-    taskInput.value = `${taskObj.task}`;
-    taskExtraInfo.value = `${taskObj.info}`;
-    modalTitle.textContent = `Edit Task:`
-    taskModal.showModal()
-}
+    const taskObj = tasks.find(task => task.id === taskId) || completedTasks.find(task => task.id === taskId);
+    if (taskObj) {
+        taskInput.value = taskObj.task;
+        taskExtraInfo.value = taskObj.info;
+        modalTitle.textContent = `Edit Task:`;
+        taskModal.showModal();
+    }
+};
 
 const closeModal = () => {
     loadTasks();
     taskModal.close();
 };
 
-saveTask = () => {
-        const task = taskInput.value;
-        const extraInfo = taskExtraInfo.value;
 
-        if(currentEditingId){
-            const editingTask = tasks[tasks.findIndex(task => task.id === currentEditingId)];
-            editingTask.info = extraInfo;
+const saveTask = () => {
+    const task = taskInput.value.trim();
+    const extraInfo = taskExtraInfo.value.trim();
+
+    if (!task) return;
+
+    if (currentEditingId) {
+        const editingTask = tasks.find(task => task.id === currentEditingId) || completedTasks.find(task => task.id === currentEditingId);
+        if (editingTask) {
             editingTask.task = task;
-        } else {
-            const newTaskObj = {
-                task: task,
-                info: extraInfo,
-                id: Date.now() + Math.random().toString(16).slice(2),
-            };
-            tasks.push(newTaskObj);
+            editingTask.info = extraInfo;
+        }
+    } else {
+        const newTaskObj = {
+            task,
+            info: extraInfo,
+            id: String(Date.now() + Math.random().toString(16).slice(2)),
         };
-        closeModal();
-}
+        tasks.push(newTaskObj);
+    }
+
+    closeModal();
+};
+
 
 const loadTasks = () => {
-    taskHolder.innerHTML = ``;
-    tasks.forEach(task => {
-        taskHolder.innerHTML += `
-            <div class="task" data-id="${task.id}">
+    taskHolder.innerHTML = '';
+
+    const renderTask = (task, isCompleted) => {
+        const isSelected = currentSelectedTaskId === task.id;
+        return `
+            <div class="task${isSelected ? ' selected-task' : ''}" data-id="${task.id}">
                 <div class="task-wrapper">
-                    <p class="task-info">${task.task}</p>
-                    <input type="checkbox" class="task-checkbox">
+                    <p class="task-info${isCompleted ? ' completed' : ''}">${task.task}</p>
+                    <input type="checkbox" class="task-checkbox" ${isCompleted ? 'checked' : ''}>
                 </div>
-                <div class="task-expand-wrapper hidden">
+                <div class="task-expand-wrapper ${isSelected ? 'unhidden' : ''}">
                     <p class="task-description">${task.info}</p>
                     <div class="button-wrapper">
                         <button class="edit-button">Edit</button>
@@ -70,9 +104,13 @@ const loadTasks = () => {
                     </div>
                 </div>
             </div>
-        `
-    });
-}
+        `;
+    };
+
+    tasks.forEach(task => taskHolder.innerHTML += renderTask(task, false));
+    completedTasks.forEach(task => taskHolder.innerHTML += renderTask(task, true));
+};
+
 
 const addTask = () => {
     currentEditingId = null;
@@ -82,44 +120,37 @@ const addTask = () => {
     taskModal.showModal();
 };
 
-taskHolder.addEventListener('change', change => {
-    if(change.target.matches('.task-checkbox')) {
-        const taskText = change.target.previousElementSibling;
-        taskText.classList.toggle('completed', change.target.checked)
-    };
+
+taskHolder.addEventListener('change', e => {
+    if (e.target.matches('.task-checkbox')) {
+        const taskId = e.target.closest('.task').dataset.id;
+        taskCompleted(taskId);
+    }
 });
 
-taskHolder.addEventListener('click', click => {
-    if(click.target.matches('.task-checkbox')){
-        return;
-    } else if(click.target.matches('.edit-button')){
-        const taskElement = click.target.closest('.task, .selected-task');
-        editTask(taskElement.dataset.id);
-    } else if(click.target.matches('.delete-task-button')){
-        const taskElement = click.target.closest('.task, .selected-task');
-        deleteTask(taskElement.dataset.id)
-    }else {
-        const taskElement = click.target.closest('.task, .selected-task');
-        if(taskElement) {
-            if(taskElement.classList.contains('task')){
-                document.querySelectorAll('#task-holder .selected-task').forEach(task =>
-                    {
-                        task.classList.replace('selected-task', 'task');
-                    });
-                taskElement.classList.replace('task', 'selected-task');
-            } else {
-                taskElement.classList.replace('selected-task', 'task');
-            }
-        };
+taskHolder.addEventListener('click', e => {
+    const taskElement = e.target.closest('.task');
+    if (!taskElement) return;
+    const taskId = taskElement.dataset.id;
 
-        document.querySelector('#task-holer .task').forEach(task => {
-            if(task.classList.contains('selected-class')){
-                return
-            } else {
-                task.classList.add('hidden');
-            }
-        })}
+    if (e.target.matches('.task-checkbox')) return;
+
+    if (e.target.matches('.edit-button')) {
+        editTask(taskId);
+    } else if (e.target.matches('.delete-task-button')) {
+        deleteTask(taskId);
+    } else {
+        if (currentSelectedTaskId === taskId) {
+            currentSelectedTaskId = null; 
+        } else {
+            currentSelectedTaskId = taskId;
+        }
+        loadTasks();
+    }
 });
+
 addTaskBtn.addEventListener('click', addTask);
 closeModalBtn.addEventListener('click', closeModal);
 saveBtn.addEventListener('click', saveTask);
+
+loadTasks();
